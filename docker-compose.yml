@@ -1,0 +1,26 @@
+# Solo para desarrollo y tests en local. En producción: Neon (PostgreSQL) y Resend (emails).
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: recetin
+      POSTGRES_PASSWORD: recetin
+      POSTGRES_DB: recetin
+    ports:
+      - "5432:5432"
+    volumes:
+      - recetin-db:/var/lib/postgresql/data
+      - ./scripts/docker-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U recetin"]
+      interval: 5s
+      retries: 10
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025" # SMTP: pon SMTP_HOST=localhost en .env
+      - "8025:8025" # bandeja web: http://localhost:8025
+
+volumes:
+  recetin-db:
