@@ -1,0 +1,3 @@
+# RECETÍN es una app privada: no se indexa.
+User-agent: *
+Disallow: /
