@@ -1,0 +1,304 @@
+// RECETÍN — modelo de datos de la Fase 1.
+// El modelo completo (fases 2–6) está diseñado en ARCHITECTURE.md §6; sus tablas
+// llegan con la migración de su fase. No añadir aquí tablas de fases futuras.
+//
+// Convenciones: ids UUID v7 · fechas timestamptz (UTC) · tablas snake_case.
+// Las tablas user/session/account/verification/rate_limit las usa Better Auth:
+// sus nombres de campo (camelCase en Prisma) deben coincidir con los que espera.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────── Identidad y acceso (Better Auth) ─────────────────────────────
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+model User {
+  id              String     @id @db.Uuid
+  name            String
+  email           String     @unique
+  emailVerified   Boolean    @default(false)
+  image           String?
+  status          UserStatus @default(ACTIVE)
+  suspendedReason String?
+  lastSeenAt      DateTime?  @db.Timestamptz(3)
+  createdAt       DateTime   @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime   @updatedAt @db.Timestamptz(3)
+
+  sessions          Session[]
+  accounts          Account[]
+  roles             UserRole[]
+  preferences       UserPreferences?
+  nutritionGoals    NutritionGoal[]
+  memberships       HouseholdMember[]
+  householdsCreated Household[]           @relation("HouseholdCreatedBy")
+  invitationsSent   HouseholdInvitation[] @relation("InvitationInvitedBy")
+  activeHousehold   ActiveHousehold?
+  consents          PrivacyConsent[]
+  auditActions      AuditLog[]            @relation("AuditActor")
+
+  // Colas y estadísticas del admin: «sin verificar hace > 7 días», «activos 30 días».
+  @@index([emailVerified, createdAt])
+  @@index([status, lastSeenAt])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @db.Uuid
+  token     String   @unique
+  expiresAt DateTime @db.Timestamptz(3)
+  ipAddress String?
+  userAgent String?
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @db.Uuid
+  accountId             String
+  providerId            String // "credential" (email + contraseña) o "google"
+  userId                String    @db.Uuid
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime? @db.Timestamptz(3)
+  refreshTokenExpiresAt DateTime? @db.Timestamptz(3)
+  scope                 String?
+  password              String? // hash scrypt; nunca la contraseña
+  createdAt             DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @db.Timestamptz(3)
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @db.Uuid
+  identifier String
+  value      String
+  expiresAt  DateTime @db.Timestamptz(3)
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model RateLimit {
+  id          String @id @db.Uuid
+  key         String @unique
+  count       Int
+  lastRequest BigInt
+
+  @@map("rate_limit")
+}
+
+// ───────────────────────────── Roles y permisos ─────────────────────────────
+
+model Role {
+  id          String           @id @default(uuid(7)) @db.Uuid
+  code        String           @unique // USER, ADMIN
+  label       String
+  permissions RolePermission[]
+  users       UserRole[]
+
+  @@map("role")
+}
+
+model Permission {
+  id    String           @id @default(uuid(7)) @db.Uuid
+  code  String           @unique // users.manage, audit.read, private_content.read…
+  label String
+  roles RolePermission[]
+
+  @@map("permission")
+}
+
+model RolePermission {
+  roleId       String     @db.Uuid
+  permissionId String     @db.Uuid
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permission")
+}
+
+model UserRole {
+  userId     String   @db.Uuid
+  roleId     String   @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  assignedAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@id([userId, roleId])
+  @@index([roleId])
+  @@map("user_role")
+}
+
+// ───────────────────────────── Perfil ─────────────────────────────
+
+enum UnitSystem {
+  METRIC // gramos y mililitros
+  HOUSEHOLD // tazas y cucharadas cuando se pueda
+}
+
+enum ThemePreference {
+  SYSTEM
+  LIGHT
+  DARK
+}
+
+model UserPreferences {
+  userId          String          @id @db.Uuid
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  units           UnitSystem      @default(METRIC)
+  defaultServings Int? // null → las recetas se abren con sus raciones originales
+  theme           ThemePreference @default(SYSTEM)
+  publicProfile   Boolean         @default(false)
+  onboardingDone  Boolean         @default(false)
+  cookingHintSeen Int             @default(0) // ayuda animada del modo cocina (máx. 3)
+  updatedAt       DateTime        @updatedAt @db.Timestamptz(3)
+
+  @@map("user_preferences")
+}
+
+model Nutrient {
+  id     String          @id @default(uuid(7)) @db.Uuid
+  code   String          @unique // ENERGY_KCAL, PROTEIN, FIBER…
+  label  String
+  unit   String // kcal, g, mg
+  sortBy Int             @default(0)
+  goals  NutritionGoal[]
+
+  @@map("nutrient")
+}
+
+model NutritionGoal {
+  userId     String   @db.Uuid
+  nutrientId String   @db.Uuid
+  target     Decimal  @db.Decimal(10, 2)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nutrient   Nutrient @relation(fields: [nutrientId], references: [id], onDelete: Restrict)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@id([userId, nutrientId])
+  @@map("nutrition_goal")
+}
+
+model PrivacyConsent {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  userId     String   @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  version    String // fecha de la versión del aviso, p. ej. "2026-10-30"
+  acceptedAt DateTime @default(now()) @db.Timestamptz(3)
+
+  @@unique([userId, version])
+  @@map("privacy_consent")
+}
+
+// ───────────────────────────── Hogares ─────────────────────────────
+
+enum HouseholdRole {
+  OWNER
+  MEMBER
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+model Household {
+  id          String                @id @default(uuid(7)) @db.Uuid
+  name        String
+  createdById String?               @db.Uuid
+  createdBy   User?                 @relation("HouseholdCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  members     HouseholdMember[]
+  invitations HouseholdInvitation[]
+  activeFor   ActiveHousehold[]
+  createdAt   DateTime              @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime              @updatedAt @db.Timestamptz(3)
+
+  @@map("household")
+}
+
+model HouseholdMember {
+  householdId String        @db.Uuid
+  userId      String        @db.Uuid
+  role        HouseholdRole @default(MEMBER)
+  joinedAt    DateTime      @default(now()) @db.Timestamptz(3)
+  household   Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([householdId, userId])
+  @@index([userId])
+  @@map("household_member")
+}
+
+model HouseholdInvitation {
+  id          String           @id @default(uuid(7)) @db.Uuid
+  householdId String           @db.Uuid
+  email       String
+  tokenHash   String           @unique // SHA-256 del token; el token solo viaja en el email
+  status      InvitationStatus @default(PENDING)
+  expiresAt   DateTime         @db.Timestamptz(3)
+  invitedById String?          @db.Uuid
+  household   Household        @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  invitedBy   User?            @relation("InvitationInvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+  createdAt   DateTime         @default(now()) @db.Timestamptz(3)
+
+  @@index([householdId, status])
+  @@index([email, status])
+  @@map("household_invitation")
+}
+
+model ActiveHousehold {
+  userId      String    @id @db.Uuid
+  householdId String    @db.Uuid
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId])
+  @@map("active_household")
+}
+
+// ───────────────────────────── Auditoría ─────────────────────────────
+
+model AuditLog {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  actorId    String?  @db.Uuid // null si el autor se eliminó: el registro se conserva
+  actor      User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorLabel String // nombre del autor en el momento de la acción
+  action     String // USER_SUSPENDED, ROLE_CHANGED, PRIVATE_CONTENT_VIEWED…
+  targetType String // USER, HOUSEHOLD…
+  targetId   String?
+  before     Json?
+  after      Json?
+  reason     String?
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+
+  @@index([createdAt(sort: Desc), id(sort: Desc)])
+  @@index([targetType, targetId])
+  @@index([actorId])
+  @@map("audit_log")
+}

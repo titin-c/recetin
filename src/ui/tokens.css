@@ -1,0 +1,62 @@
+/*
+ * RECETÍN — tokens del design system (docs del proyecto: recetin-design-system.md).
+ * Mismos nombres en diseño y código. No usar colores, espaciados ni tamaños fuera de aquí.
+ * Contrastes verificados en los pasos 6–8 (AA mínimo, AAA en texto y avisos).
+ */
+:root {
+  color-scheme: light;
+  --header-height: 64px;
+}
+
+/* Valores CLAROS de color: en src/app/globals.css (@theme), para que Tailwind genere las utilidades.
+   Aquí solo se redefinen para el modo oscuro, con los mismos nombres. */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --color-bg: #121212;
+    --color-surface: #1e1e1e;
+    --color-field: #121212;
+    --color-border: #333333;
+    --color-border-field: #8a8a8a;
+    --color-text: #efefef;
+    --color-text-2: #bdbdbd;
+    --color-accent: #e8a3b8;
+    --color-accent-hover: #f0bccb;
+    --color-on-accent: #121212;
+    --color-action: #ffffff;
+    --color-on-action: #121212;
+    --color-error: #ff8a80;
+    --color-error-border: #ff8a80;
+    --color-warning: #ffb74d;
+    --color-warning-icon: #ffb74d;
+    --color-info: #90caf9;
+    --color-estimate: #e6c860;
+    --color-disabled: #8a8a8a;
+    --color-overlay: rgb(0 0 0 / 0.65);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-bg: #121212;
+  --color-surface: #1e1e1e;
+  --color-field: #121212;
+  --color-border: #333333;
+  --color-border-field: #8a8a8a;
+  --color-text: #efefef;
+  --color-text-2: #bdbdbd;
+  --color-accent: #e8a3b8;
+  --color-accent-hover: #f0bccb;
+  --color-on-accent: #121212;
+  --color-action: #ffffff;
+  --color-on-action: #121212;
+  --color-error: #ff8a80;
+  --color-error-border: #ff8a80;
+  --color-warning: #ffb74d;
+  --color-warning-icon: #ffb74d;
+  --color-info: #90caf9;
+  --color-estimate: #e6c860;
+  --color-disabled: #8a8a8a;
+  --color-overlay: rgb(0 0 0 / 0.65);
+}

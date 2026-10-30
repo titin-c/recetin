@@ -1,0 +1,101 @@
+@import "tailwindcss";
+@import "../ui/tokens.css";
+
+/* Tokens del design system (modo claro). Se vacían las escalas por defecto de Tailwind
+   para que no se cuelen colores, sombras ni radios fuera del sistema.
+   El modo oscuro redefine las mismas variables en src/ui/tokens.css. */
+@theme {
+  --color-*: initial;
+  --color-bg: #fdf9f8;
+  --color-surface: #f4ece9;
+  --color-field: #fffdfc;
+  --color-border: #e6dcd9;
+  --color-border-field: #776d63;
+  --color-text: #211d1a;
+  --color-text-2: #524a43;
+  --color-accent: #6d1f3a;
+  --color-accent-hover: #561830;
+  --color-on-accent: #fdf9f8;
+  --color-action: #1c1917;
+  --color-on-action: #fbf8f3;
+  --color-error: #7a0000;
+  --color-error-border: #b71c1c;
+  --color-warning: #853200;
+  --color-warning-icon: #c24400;
+  --color-info: #0d47a1;
+  --color-estimate: #5f4b00;
+  --color-disabled: #8f857b;
+  --color-overlay: rgb(33 29 26 / 0.55);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --radius-*: initial;
+  --shadow-*: initial;
+
+  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
+
+  --text-xs: 13px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 32px;
+}
+
+@layer base {
+  html {
+    scroll-padding-top: calc(var(--header-height) + 16px); /* foco nunca tapado por la cabecera (paso 7) */
+  }
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+  }
+  h1 { font-size: 32px; line-height: 1.15; }
+  h2 { font-size: 24px; line-height: 1.2; }
+  h3 { font-size: 20px; line-height: 1.25; }
+
+  /* Foco doble (fondo + acción), visible sobre cualquier superficie. */
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-action);
+  }
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--color-accent);
+  }
+  a {
+    color: inherit;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .link {
+    color: var(--color-accent);
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .sr-only-focusable:not(:focus) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
