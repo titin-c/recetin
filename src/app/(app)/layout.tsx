@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireActor } from "@/server/session";
+import { isAdmin } from "@/modules/access";
 import { readFlash } from "@/server/flash";
 import { hasCurrentPrivacyConsent } from "@/modules/identity/server";
 import { householdNames } from "@/modules/households/server";
@@ -28,8 +29,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           RECETÍN
         </Link>
         <HouseholdSwitcher households={households} activeId={actor.activeHouseholdId} switchAction={switchHouseholdAction} />
-        {/* El acceso al panel de administración se activa con la entrega 11c. */}
-        <DesktopNav showAdmin={false} />
+        <DesktopNav showAdmin={isAdmin(actor)} />
       </header>
       <main id="contenido" className="px-4 pb-28 pt-6 md:px-10 md:pb-16 md:pt-8">
         {children}
