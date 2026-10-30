@@ -12,9 +12,10 @@ App web privada para gestionar recetas, planificar menús, calcular valores nutr
 ## Estado
 
 **Fase 1:**
+
 - **11a:** acceso con email y contraseña (y con Google cuando se configure), verificación de email, recuperación de contraseña, aviso de privacidad y la base de datos de la Fase 1.
 - **11b:** navegación de la app (5 secciones, las de fases futuras explican qué harán), selector de hogar, bienvenida, perfil (datos, objetivos, tema, seguridad, eliminar cuenta) y hogares (crear, invitar por email, roles, salir, borrar).
-- Siguiente: **11c** (panel de administración y auditoría).
+- **11c:** panel de administración (`/admin`, solo administradores; para el resto la ruta no existe): inicio con colas y cifras, gestión de usuarios (buscar, filtrar, ficha con rol, suspender/reactivar con motivo, enviar recuperación, reenviar verificación, eliminar), contenido privado con registro obligatorio y auditoría paginada. Control de rendimiento con Lighthouse en el CI.
 
 ## Arrancar en tu ordenador
 
@@ -41,6 +42,9 @@ pnpm typecheck       # TypeScript estricto
 pnpm test            # tests unitarios y de componentes
 pnpm test:int:prepare && pnpm test:int   # tests de integración contra la BD de pruebas (DATABASE_URL_TEST)
 pnpm build           # build de producción
+pnpm lhci            # Lighthouse (con la app arrancada en http://localhost:3000): rendimiento y accesibilidad
 ```
+
+`pnpm lhci` crea una cuenta de prueba con rol de administrador en tu base de datos local (solo funciona contra `localhost`) para medir también las páginas con sesión. Los informes quedan en `.lighthouseci/`.
 
 Lo mismo se ejecuta automáticamente en GitHub en cada push y pull request (`.github/workflows/ci.yml`).

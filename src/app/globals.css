@@ -55,18 +55,37 @@
     font-size: 16px;
     line-height: 1.5;
   }
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     font-family: var(--font-display);
     font-weight: 600;
   }
-  h1 { font-size: 32px; line-height: 1.15; }
-  h2 { font-size: 24px; line-height: 1.2; }
-  h3 { font-size: 20px; line-height: 1.25; }
+  /* Solo se cargan Inter 400/500: la negrita del sistema es 500 (sin peso 700 que descargar). */
+  strong,
+  b,
+  th {
+    font-weight: 500;
+  }
+  h1 {
+    font-size: 32px;
+    line-height: 1.15;
+  }
+  h2 {
+    font-size: 24px;
+    line-height: 1.2;
+  }
+  h3 {
+    font-size: 20px;
+    line-height: 1.25;
+  }
 
   /* Foco doble (fondo + acción), visible sobre cualquier superficie. */
   :focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-action);
+    box-shadow:
+      0 0 0 2px var(--color-bg),
+      0 0 0 4px var(--color-action);
   }
   input[type="checkbox"],
   input[type="radio"] {
@@ -76,7 +95,9 @@
     color: inherit;
   }
   @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
+    *,
+    *::before,
+    *::after {
       animation-duration: 0.01ms !important;
       transition-duration: 0.01ms !important;
     }

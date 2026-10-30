@@ -32,10 +32,10 @@ export function DesktopNav({ showAdmin }: { showAdmin: boolean }) {
         </Link>
       ))}
       {showAdmin && (
-        <a href="/admin" className="ml-2 flex items-center gap-2 border-l border-border px-3.5 text-[15px] font-medium no-underline">
+        <Link href="/admin" className="ml-2 flex items-center gap-2 border-l border-border px-3.5 text-[15px] font-medium no-underline">
           <Icon.shield />
           Admin
-        </a>
+        </Link>
       )}
     </nav>
   );

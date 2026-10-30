@@ -11,23 +11,23 @@
 
 ## 2. Stack
 
-| Pieza | Elección | Motivo |
-|---|---|---|
-| Lenguaje | TypeScript estricto | Brief |
-| Framework | Next.js 16, App Router, Server Components + Server Actions; Cache Components desactivado (ADR 0002) | Brief; lógica en servidor por defecto |
-| Base de datos | PostgreSQL (Neon, región UE) | Brief; plan gratuito para empezar |
-| ORM / migraciones | Prisma 7 (adaptadores pg / Neon), migraciones versionadas en `prisma/migrations` | Brief; migraciones reproducibles |
-| Autenticación | Better Auth (Google + email/contraseña, sesiones en BD, verificación de email, recuperación, límite de intentos) | Mantenedores de Auth.js lo recomiendan para proyectos nuevos; sesiones revocables |
-| Validación | Zod, un esquema por entrada, compartido cliente/servidor | Brief: esquemas tipados |
-| Estilos | Tailwind CSS leyendo las variables CSS del design system (`src/ui/tokens.css`) | Paso 6 |
-| Iconos | lucide-react con `strokeWidth={1}` y `absoluteStrokeWidth` | Paso 7 |
-| Email | Resend (región UE si la cuenta lo permite) detrás de la interfaz `EmailSender`; en local, Mailpit | Paso 5 |
-| Imágenes (Fase 2) | Cloudflare R2 (S3 compatible, jurisdicción UE) detrás de `ObjectStorage` | Brief: almacenamiento de objetos |
-| Hosting | Vercel (región de funciones Fráncfort) | Paso 9 |
-| Tests | Vitest (unitarios e integración), Testing Library, Playwright (extremo a extremo) | Brief: tres niveles de pruebas |
-| Calidad | ESLint, Prettier, `tsc --noEmit` en CI | — |
-| Gestor de paquetes | pnpm | Rápido y con lockfile estricto |
-| Local | Docker Compose: PostgreSQL + Mailpit (o Postgres.app sin Docker) | Mismo motor que producción |
+| Pieza              | Elección                                                                                                         | Motivo                                                                            |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Lenguaje           | TypeScript estricto                                                                                              | Brief                                                                             |
+| Framework          | Next.js 16, App Router, Server Components + Server Actions; Cache Components desactivado (ADR 0002)              | Brief; lógica en servidor por defecto                                             |
+| Base de datos      | PostgreSQL (Neon, región UE)                                                                                     | Brief; plan gratuito para empezar                                                 |
+| ORM / migraciones  | Prisma 7 (adaptadores pg / Neon), migraciones versionadas en `prisma/migrations`                                 | Brief; migraciones reproducibles                                                  |
+| Autenticación      | Better Auth (Google + email/contraseña, sesiones en BD, verificación de email, recuperación, límite de intentos) | Mantenedores de Auth.js lo recomiendan para proyectos nuevos; sesiones revocables |
+| Validación         | Zod, un esquema por entrada, compartido cliente/servidor                                                         | Brief: esquemas tipados                                                           |
+| Estilos            | Tailwind CSS leyendo las variables CSS del design system (`src/ui/tokens.css`)                                   | Paso 6                                                                            |
+| Iconos             | lucide-react con `strokeWidth={1}` y `absoluteStrokeWidth`                                                       | Paso 7                                                                            |
+| Email              | Resend (región UE si la cuenta lo permite) detrás de la interfaz `EmailSender`; en local, Mailpit                | Paso 5                                                                            |
+| Imágenes (Fase 2)  | Cloudflare R2 (S3 compatible, jurisdicción UE) detrás de `ObjectStorage`                                         | Brief: almacenamiento de objetos                                                  |
+| Hosting            | Vercel (región de funciones Fráncfort)                                                                           | Paso 9                                                                            |
+| Tests              | Vitest (unitarios e integración), Testing Library, Playwright (extremo a extremo)                                | Brief: tres niveles de pruebas                                                    |
+| Calidad            | ESLint, Prettier, `tsc --noEmit` en CI                                                                           | —                                                                                 |
+| Gestor de paquetes | pnpm                                                                                                             | Rápido y con lockfile estricto                                                    |
+| Local              | Docker Compose: PostgreSQL + Mailpit (o Postgres.app sin Docker)                                                 | Mismo motor que producción                                                        |
 
 Ningún proveedor entra en el dominio: todos se usan a través de un **adaptador** en `src/server/` o en el `infrastructure/` del módulo. Cambiar Vercel por un VPS, Resend por otro SMTP o R2 por S3 no toca la lógica de negocio.
 
@@ -109,6 +109,7 @@ src/modules/households/
 ```
 
 Reglas:
+
 1. `app/` solo llama a casos de uso de los contratos del módulo. Nunca a Prisma directamente.
 2. Un módulo solo importa de otro a través de su contrato (`index.ts`, `schemas.ts`, `server.ts` o `ui.ts`). Prohibido importar carpetas internas ajenas (regla de ESLint `no-restricted-imports`). Se separa en tres archivos para que el código de cliente no arrastre Zod ni código de servidor (ADR 0003).
 3. `domain/` no importa nada de `infrastructure/`, de Next ni de Prisma: así se prueba con tests unitarios puros.
@@ -129,23 +130,23 @@ Reglas:
 
 ### 6.1 Tablas de la Fase 1 (se crean ahora)
 
-| Modelo | Campos clave | Relaciones y borrado |
-|---|---|---|
-| User | email (único), emailVerified, name, status (ACTIVE/SUSPENDED), suspendedReason, lastSeenAt, deletedAt | — |
-| Account | providerId (google/credential), accountId, passwordHash (argon2/scrypt) | User 1–N, Cascade |
-| Session | token (único), expiresAt, ipHash, userAgent | User 1–N, Cascade |
-| Verification | identifier, valueHash, expiresAt (verificar email, recuperar contraseña) | — |
-| Role / Permission / RolePermission / UserRole | code (único) | UserRole Cascade con User |
-| UserPreferences | units (METRIC/HOUSEHOLD), defaultServings (nullable), theme, publicProfile, onboardingDone, cookingHintSeen (0–3) | User 1–1, Cascade |
-| Nutrient | code (ENERGY_KCAL, PROTEIN…), unit, label | Semilla; se reutiliza en F3 |
-| NutritionGoal | target (decimal) | User + Nutrient, único por par; Cascade con User |
-| Household | name, createdById | — |
-| HouseholdMember | role (OWNER/MEMBER), joinedAt | Household + User, único por par; Cascade con ambos |
-| HouseholdInvitation | email, tokenHash (único), status, expiresAt, invitedById | Household Cascade |
-| ActiveHousehold | userId (PK), householdId | Cascade; si se borra el hogar, pasa al siguiente |
-| PrivacyConsent | version, acceptedAt | User Cascade |
-| AuditLog | actorId, action, targetType, targetId, before (JSON), after (JSON), reason, createdAt | actorId SetNull (el registro se conserva aunque se borre quien actuó) |
-| RateLimit | key, count, windowStart | Lo usa Better Auth |
+| Modelo                                        | Campos clave                                                                                                      | Relaciones y borrado                                                  |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| User                                          | email (único), emailVerified, name, status (ACTIVE/SUSPENDED), suspendedReason, lastSeenAt, deletedAt             | —                                                                     |
+| Account                                       | providerId (google/credential), accountId, passwordHash (argon2/scrypt)                                           | User 1–N, Cascade                                                     |
+| Session                                       | token (único), expiresAt, ipHash, userAgent                                                                       | User 1–N, Cascade                                                     |
+| Verification                                  | identifier, valueHash, expiresAt (verificar email, recuperar contraseña)                                          | —                                                                     |
+| Role / Permission / RolePermission / UserRole | code (único)                                                                                                      | UserRole Cascade con User                                             |
+| UserPreferences                               | units (METRIC/HOUSEHOLD), defaultServings (nullable), theme, publicProfile, onboardingDone, cookingHintSeen (0–3) | User 1–1, Cascade                                                     |
+| Nutrient                                      | code (ENERGY_KCAL, PROTEIN…), unit, label                                                                         | Semilla; se reutiliza en F3                                           |
+| NutritionGoal                                 | target (decimal)                                                                                                  | User + Nutrient, único por par; Cascade con User                      |
+| Household                                     | name, createdById                                                                                                 | —                                                                     |
+| HouseholdMember                               | role (OWNER/MEMBER), joinedAt                                                                                     | Household + User, único por par; Cascade con ambos                    |
+| HouseholdInvitation                           | email, tokenHash (único), status, expiresAt, invitedById                                                          | Household Cascade                                                     |
+| ActiveHousehold                               | userId (PK), householdId                                                                                          | Cascade; si se borra el hogar, pasa al siguiente                      |
+| PrivacyConsent                                | version, acceptedAt                                                                                               | User Cascade                                                          |
+| AuditLog                                      | actorId, action, targetType, targetId, before (JSON), after (JSON), reason, createdAt                             | actorId SetNull (el registro se conserva aunque se borre quien actuó) |
+| RateLimit                                     | key, count, windowStart                                                                                           | Lo usa Better Auth                                                    |
 
 Índices extra: `audit_log(created_at)`, `audit_log(target_type, target_id)`, `audit_log(actor_id)`, `household_member(user_id)`, `user(status, last_seen_at)` para las colas y estadísticas del admin.
 
@@ -153,31 +154,31 @@ Reglas:
 
 ### 6.2 Fases siguientes (solo diseñadas; sus tablas llegan con su fase)
 
-| Fase | Modelos |
-|---|---|
+| Fase                     | Modelos                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | F2 Recetas e importación | Recipe (ownerId, visibility PRIVATE/PUBLIC/ARCHIVED, originRecipeId para personalizaciones, currentVersionId) · **RecipeVersion** (inmutable: número, raciones, tiempos, notas) · RecipeIngredientLine (versionId, ingredientId nullable, rawText, cantidad, unitId, estado SECO/CRUDO/COCIDO/ESCURRIDO…, preparación, scalingRuleId, matchConfidence) · RecipeStep (orden, texto, duración, timeKind FIXED/MANUAL_PREP/VOLUME_COOK, temperatura) · ScalingRule (estrategia, parámetros JSON, versión) · Ingredient · IngredientAlias · Unit · UnitConversion · Category · Tag · Allergen · RecipeSource (url, autor, atribución) · SavedRecipe (userId, recipeId, savedVersionId) · Favorite · ImportTemplate + ImportTemplateVersion · XmlSchemaVersion · ImportJob (estado, errores, borrador) · MediaAsset · CookingProgress |
-| F3 Nutrición | Product (marca, código de barras) · NutritionSource (BEDCA, USDA, OFF, MANUAL; licencia, atribución) · NutritionProfile (ingredientId o productId, estado, base 100 g/100 ml, externalId, fecha, método, confianza, limitaciones) · NutrientValue · Density · EdiblePortion · NutritionCorrection (manual, auditada) |
-| F4 Planificador | MealSlot (configurable por hogar) · PlannedMeal (householdId, fecha, slot, **recipeVersionId**, invitados) · PlannedMealEater (userId) |
-| F5 Compra | ShoppingList (householdId, desde, hasta) · ShoppingListItem (cantidad, unidad, origin AUTO/MANUAL, manualOverride, checked, atHome, categoría) · ShoppingItemSource (item ↔ PlannedMeal) · ShoppingCategory |
-| F6 Comunidad | Report (objetivo, motivo, estado) · ModerationAction |
+| F3 Nutrición             | Product (marca, código de barras) · NutritionSource (BEDCA, USDA, OFF, MANUAL; licencia, atribución) · NutritionProfile (ingredientId o productId, estado, base 100 g/100 ml, externalId, fecha, método, confianza, limitaciones) · NutrientValue · Density · EdiblePortion · NutritionCorrection (manual, auditada)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| F4 Planificador          | MealSlot (configurable por hogar) · PlannedMeal (householdId, fecha, slot, **recipeVersionId**, invitados) · PlannedMealEater (userId)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| F5 Compra                | ShoppingList (householdId, desde, hasta) · ShoppingListItem (cantidad, unidad, origin AUTO/MANUAL, manualOverride, checked, atHome, categoría) · ShoppingItemSource (item ↔ PlannedMeal) · ShoppingCategory                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| F6 Comunidad             | Report (objetivo, motivo, estado) · ModerationAction                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 La versión de receta es **inmutable**: el plan, las bibliotecas y las personalizaciones apuntan a una versión concreta. Una edición crea una versión nueva; nunca se reescribe una anterior.
 
 ## 7. Convenciones de nombres
 
-| Elemento | Convención | Ejemplo |
-|---|---|---|
-| Carpetas | kebab-case | `password-field/`, `invite-member.ts` |
-| Componentes React | PascalCase.tsx, mismo nombre que el export | `PasswordField.tsx` |
-| Casos de uso | verbo-objeto en kebab-case, una función exportada | `suspend-user.ts` → `suspendUser()` |
-| Esquemas Zod | `<caso>Schema` en `schemas.ts` del módulo | `inviteMemberSchema` |
-| Tests unitarios | junto al archivo, `.test.ts(x)` | `policies.test.ts` |
-| Tests de integración (con BD real de pruebas) | junto al archivo, `.int.test.ts` | `setup.int.test.ts` |
-| Tests e2e | `tests/e2e/<flujo>.spec.ts` | `registro.spec.ts` |
-| Rutas | en español, kebab-case | `/perfil/hogares`, `/admin/usuarios` |
-| Variables CSS | igual que los tokens | `--color-accent` |
-| Barrel files | SOLO los contratos de cada módulo (`index.ts`, `schemas.ts`, `server.ts`, `ui.ts`); en ningún otro sitio | — |
-| Tipos | locales en su archivo; los del contrato, exportados desde `index.ts` | — |
+| Elemento                                      | Convención                                                                                               | Ejemplo                               |
+| --------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| Carpetas                                      | kebab-case                                                                                               | `password-field/`, `invite-member.ts` |
+| Componentes React                             | PascalCase.tsx, mismo nombre que el export                                                               | `PasswordField.tsx`                   |
+| Casos de uso                                  | verbo-objeto en kebab-case, una función exportada                                                        | `suspend-user.ts` → `suspendUser()`   |
+| Esquemas Zod                                  | `<caso>Schema` en `schemas.ts` del módulo                                                                | `inviteMemberSchema`                  |
+| Tests unitarios                               | junto al archivo, `.test.ts(x)`                                                                          | `policies.test.ts`                    |
+| Tests de integración (con BD real de pruebas) | junto al archivo, `.int.test.ts`                                                                         | `setup.int.test.ts`                   |
+| Tests e2e                                     | `tests/e2e/<flujo>.spec.ts`                                                                              | `registro.spec.ts`                    |
+| Rutas                                         | en español, kebab-case                                                                                   | `/perfil/hogares`, `/admin/usuarios`  |
+| Variables CSS                                 | igual que los tokens                                                                                     | `--color-accent`                      |
+| Barrel files                                  | SOLO los contratos de cada módulo (`index.ts`, `schemas.ts`, `server.ts`, `ui.ts`); en ningún otro sitio | —                                     |
+| Tipos                                         | locales en su archivo; los del contrato, exportados desde `index.ts`                                     | —                                     |
 
 ## 8. Seguridad de base (detalle en el paso 13)
 
@@ -224,11 +225,11 @@ Referencia: móvil gama media, Lighthouse «4G lenta». Objetivos LCP < 2,5 s ·
 
 ## 11. Alternativas descartadas
 
-| Decisión | Alternativa descartada | Motivo |
-|---|---|---|
-| Monolito modular | Microservicios / monorepo | Sin necesidad medible (brief §13) |
-| Módulos por dominio (`src/modules`) | Carpetas por tipo (`components/`, `services/` globales) | Con 9 dominios, por tipo mezcla reglas de todos y duplica lógica |
-| Better Auth | Auth.js | Mantenido ahora por el equipo de Better Auth, que recomienda Better Auth para proyectos nuevos; además Auth.js no ofrece sesiones en BD con email/contraseña de serie |
-| Server Actions + casos de uso | API REST completa desde el principio | No hay clientes externos; la lógica queda en casos de uso reutilizables si algún día se publica una API |
-| Límite de peticiones en PostgreSQL | Redis | Una pieza de infraestructura menos; se cambia si se mide la necesidad |
-| Tablas de roles y permisos | Enum de rol en `User` | El brief pide roles y permisos como entidades; permite añadir permisos sin migrar código |
+| Decisión                            | Alternativa descartada                                  | Motivo                                                                                                                                                                |
+| ----------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Monolito modular                    | Microservicios / monorepo                               | Sin necesidad medible (brief §13)                                                                                                                                     |
+| Módulos por dominio (`src/modules`) | Carpetas por tipo (`components/`, `services/` globales) | Con 9 dominios, por tipo mezcla reglas de todos y duplica lógica                                                                                                      |
+| Better Auth                         | Auth.js                                                 | Mantenido ahora por el equipo de Better Auth, que recomienda Better Auth para proyectos nuevos; además Auth.js no ofrece sesiones en BD con email/contraseña de serie |
+| Server Actions + casos de uso       | API REST completa desde el principio                    | No hay clientes externos; la lógica queda en casos de uso reutilizables si algún día se publica una API                                                               |
+| Límite de peticiones en PostgreSQL  | Redis                                                   | Una pieza de infraestructura menos; se cambia si se mide la necesidad                                                                                                 |
+| Tablas de roles y permisos          | Enum de rol en `User`                                   | El brief pide roles y permisos como entidades; permite añadir permisos sin migrar código                                                                              |

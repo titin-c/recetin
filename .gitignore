@@ -47,3 +47,6 @@ next-env.d.ts
 /src/generated/
 # BD local sin Docker
 /.local-db/
+
+# Lighthouse CI
+/.lighthouseci/
