@@ -2,7 +2,7 @@
 
 import { useFormStatus } from "react-dom";
 import type { ComponentProps } from "react";
-import { Button, type ButtonVariant } from "./Button";
+import { Button, type ButtonSize, type ButtonVariant } from "./Button";
 import { Icon } from "../icons";
 
 /**
@@ -13,14 +13,16 @@ export function SubmitButton({
   children,
   pendingLabel,
   variant = "primary",
+  size,
   full = true,
   ...props
-}: { pendingLabel: string; variant?: ButtonVariant; full?: boolean } & Omit<ComponentProps<"button">, "type">) {
+}: { pendingLabel: string; variant?: ButtonVariant; size?: ButtonSize; full?: boolean } & Omit<ComponentProps<"button">, "type">) {
   const { pending } = useFormStatus();
   return (
     <Button
       type="submit"
       variant={variant}
+      size={size}
       full={full}
       aria-busy={pending || undefined}
       aria-disabled={pending || undefined}

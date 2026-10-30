@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { cookies } from "next/headers";
 import "./globals.css";
 
 // Fuentes autoalojadas, solo los pesos usados y subconjunto latino (ARCHITECTURE.md §10.9).
@@ -35,9 +36,12 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Tema elegido en Perfil (claro/oscuro); sin cookie, el del sistema operativo.
+  const theme = (await cookies()).get("recetin_theme")?.value;
+  const dataTheme = theme === "LIGHT" ? "light" : theme === "DARK" ? "dark" : undefined;
   return (
-    <html lang="es" className={`${inter.variable} ${fraunces.variable}`}>
+    <html lang="es" data-theme={dataTheme} className={`${inter.variable} ${fraunces.variable}`}>
       <body>{children}</body>
     </html>
   );

@@ -16,6 +16,7 @@ import {
   type FieldErrors,
 } from "@/modules/identity/schemas";
 import { recordPrivacyConsent } from "@/modules/identity/server";
+import { safeInternalPath } from "@/lib/safe-redirect";
 
 export type FormState = {
   /** Mensaje general (arriba del formulario). */
@@ -27,6 +28,9 @@ export type FormState = {
 };
 
 const AFTER_SIGN_IN = "/biblioteca";
+const AFTER_SIGN_UP = "/bienvenida";
+/** Destino tras entrar/registrarse: solo rutas internas (p. ej. una invitación pendiente). */
+const nextFrom = (fd: FormData | undefined, fallback: string) => safeInternalPath(fd?.get("siguiente"), fallback);
 
 function apiErrorCode(e: unknown): string | undefined {
   if (e instanceof APIError) {
@@ -64,14 +68,20 @@ export async function signInAction(_: FormState, formData: FormData): Promise<Fo
       values: { email: raw.email },
     };
   }
-  redirect(AFTER_SIGN_IN);
+  redirect(nextFrom(formData, AFTER_SIGN_IN) as never);
 }
 
 /** Entrar o registrarse con Google: Better Auth devuelve la URL de Google y redirigimos. */
-export async function googleAction(): Promise<void> {
+export async function googleAction(formData?: FormData): Promise<void> {
   if (!isGoogleEnabled) redirect("/entrar?error=google_no_configurado");
+  const next = formData?.get("siguiente") ? nextFrom(formData, AFTER_SIGN_IN) : undefined;
   const result = await auth.api.signInSocial({
-    body: { provider: "google", callbackURL: AFTER_SIGN_IN, newUserCallbackURL: AFTER_SIGN_IN, errorCallbackURL: "/entrar" },
+    body: {
+      provider: "google",
+      callbackURL: next ?? AFTER_SIGN_IN,
+      newUserCallbackURL: next ?? AFTER_SIGN_UP,
+      errorCallbackURL: "/entrar",
+    },
     headers: await headers(),
   });
   if (!result?.url) redirect("/entrar?error=google");
@@ -111,7 +121,8 @@ export async function signUpAction(_: FormState, formData: FormData): Promise<Fo
   }
 
   await recordPrivacyConsent(userId);
-  redirect("/mira-tu-correo");
+  // Si venía de una invitación, la invitación primero; si no, «Mira tu correo» (y de ahí, la bienvenida).
+  redirect((formData.get("siguiente") ? nextFrom(formData, "/mira-tu-correo") : "/mira-tu-correo") as never);
 }
 
 /** Reenvía el email de verificación de la persona que tiene la sesión abierta. */

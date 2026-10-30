@@ -2,7 +2,7 @@ import { buttonClasses } from "@/ui/button/Button";
 import { googleAction } from "./actions";
 
 /** Botón de Google. El logo va en color: es la única excepción, la exigen sus normas de marca (paso 8). */
-export function GoogleButton({ label, enabled }: { label: string; enabled: boolean }) {
+export function GoogleButton({ label, enabled, next }: { label: string; enabled: boolean; next?: string }) {
   if (!enabled) {
     return (
       <div className="mt-6">
@@ -15,6 +15,7 @@ export function GoogleButton({ label, enabled }: { label: string; enabled: boole
   }
   return (
     <form action={googleAction} className="mt-6">
+      {next && <input type="hidden" name="siguiente" value={next} />}
       <button type="submit" className={buttonClasses("secondary", "md", true)}>
         <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path fill="#4285F4" d="M23 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.5z" />

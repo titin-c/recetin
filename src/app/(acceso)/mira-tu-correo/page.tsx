@@ -18,7 +18,7 @@ export default async function CheckEmailPage() {
         Te hemos enviado un enlace a <b className="font-medium text-text">{actor.email}</b> para confirmar tu cuenta.
       </p>
       <p className="mt-3 text-text-2">Mientras tanto ya puedes usar RECETÍN. Lo necesitarás para publicar recetas e invitar a tu hogar.</p>
-      <ButtonLink href="/biblioteca" variant="primary" full className="mt-8">
+      <ButtonLink href="/bienvenida" variant="primary" full className="mt-8">
         Empezar
       </ButtonLink>
       <ResendVerification />

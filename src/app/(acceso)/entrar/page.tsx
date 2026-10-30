@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Alert } from "@/ui/alert/Alert";
 import { isGoogleEnabled } from "@/server/env";
 import { getActor } from "@/server/session";
+import { safeInternalPath } from "@/lib/safe-redirect";
 import { Divider, GoogleButton } from "../GoogleButton";
 import { SignInForm } from "./SignInForm";
 
@@ -11,6 +12,12 @@ export const metadata: Metadata = { title: "Entrar" };
 
 /** Avisos que pueden llegar por la URL (vuelta de Google, contraseña cambiada). Solo códigos, nunca datos. */
 function Notice({ error, aviso }: { error?: string; aviso?: string }) {
+  if (aviso === "cuenta_eliminada")
+    return (
+      <Alert tone="info" title="Cuenta eliminada." className="mt-6">
+        Hemos borrado tus datos. Gracias por haber usado RECETÍN.
+      </Alert>
+    );
   if (aviso === "contrasena_cambiada")
     return (
       <Alert tone="info" title="Contraseña cambiada." className="mt-6">
@@ -44,19 +51,20 @@ function Notice({ error, aviso }: { error?: string; aviso?: string }) {
 }
 
 export default async function SignInPage({ searchParams }: PageProps<"/entrar">) {
-  if (await getActor()) redirect("/biblioteca");
-  const { error, aviso } = await searchParams;
+  const { error, aviso, siguiente } = await searchParams;
+  const next = siguiente ? safeInternalPath(siguiente, "/biblioteca") : undefined;
+  if (await getActor()) redirect((next ?? "/biblioteca") as never);
   return (
     <>
       <h1 className="mt-8">Entra en tu cocina</h1>
       <p className="mt-2 text-text-2">Tus recetas, tu menú y tu lista de la compra.</p>
       <Notice error={typeof error === "string" ? error : undefined} aviso={typeof aviso === "string" ? aviso : undefined} />
-      <GoogleButton label="Continuar con Google" enabled={isGoogleEnabled} />
+      <GoogleButton label="Continuar con Google" enabled={isGoogleEnabled} next={next} />
       <Divider>o con tu email</Divider>
-      <SignInForm />
+      <SignInForm next={next} />
       <p className="mt-6 text-center text-sm">
         ¿No tienes cuenta?{" "}
-        <Link href="/registro" className="link">
+        <Link href={(next ? `/registro?siguiente=${encodeURIComponent(next)}` : "/registro") as never} className="link">
           Crear cuenta
         </Link>
       </p>

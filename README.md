@@ -11,8 +11,10 @@ App web privada para gestionar recetas, planificar menús, calcular valores nutr
 
 ## Estado
 
-**Fase 1, entrega 11a:** acceso con email y contraseña (y con Google cuando se configure), verificación de email, recuperación de contraseña, aviso de privacidad y la base de datos de la Fase 1 (usuarios, roles y permisos, perfil, hogares, auditoría).
-Siguientes entregas: 11b (bienvenida, perfil, hogares y navegación) y 11c (panel de administración).
+**Fase 1:**
+- **11a:** acceso con email y contraseña (y con Google cuando se configure), verificación de email, recuperación de contraseña, aviso de privacidad y la base de datos de la Fase 1.
+- **11b:** navegación de la app (5 secciones, las de fases futuras explican qué harán), selector de hogar, bienvenida, perfil (datos, objetivos, tema, seguridad, eliminar cuenta) y hogares (crear, invitar por email, roles, salir, borrar).
+- Siguiente: **11c** (panel de administración y auditoría).
 
 ## Arrancar en tu ordenador
 

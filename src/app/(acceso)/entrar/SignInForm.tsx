@@ -8,10 +8,11 @@ import { PasswordField } from "@/ui/password-field/PasswordField";
 import { SubmitButton } from "@/ui/button/SubmitButton";
 import { signInAction, type FormState } from "../actions";
 
-export function SignInForm() {
+export function SignInForm({ next }: { next?: string }) {
   const [state, action] = useActionState<FormState, FormData>(signInAction, {});
   return (
     <form action={action} noValidate>
+      {next && <input type="hidden" name="siguiente" value={next} />}
       {state.error && (
         <Alert tone="error" title={state.error.title} className="mt-6">
           {state.error.detail}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Alert } from "@/ui/alert/Alert";
+import { EmptyState } from "@/ui/empty-state/EmptyState";
 import { Icon } from "@/ui/icons";
 import { requireActor } from "@/server/session";
 
@@ -20,11 +21,20 @@ export default async function LibraryPage() {
         </Alert>
       )}
       <h1>Mi biblioteca</h1>
-      <div className="mt-4 border border-dashed border-border-field bg-surface px-6 py-10 text-center">
-        <Icon.book size={32} className="mx-auto mb-3" />
-        <h2 className="text-xl">Llega en la próxima fase</h2>
-        <p className="mt-2 text-sm text-text-2">Aquí guardarás tus recetas, las de la comunidad y las que importes de otras webs.</p>
-      </div>
+      <EmptyState icon={<Icon.book size={32} />} title="Llega en la fase 2">
+        <p>Aquí guardarás tus recetas, las de la comunidad y las que importes de otras webs.</p>
+        <p>
+          Mientras tanto, puedes{" "}
+          <Link href="/perfil" className="link">
+            configurar tu perfil
+          </Link>{" "}
+          e{" "}
+          <Link href="/perfil/hogares" className="link">
+            invitar a tu hogar
+          </Link>
+          .
+        </p>
+      </EmptyState>
     </div>
   );
 }

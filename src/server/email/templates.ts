@@ -39,3 +39,13 @@ export function resetPasswordMessage(name: string, url: string): EmailMessage {
     footer: "El enlace caduca en 1 hora y solo sirve una vez. Si no lo has pedido tú, ignora este mensaje: tu contraseña no cambia.",
   });
 }
+
+export function householdInvitationMessage(inviterName: string, householdName: string, url: string): EmailMessage {
+  return layout({
+    title: `${inviterName} te invita a «${householdName}»`,
+    intro: `En RECETÍN compartiréis el menú de la semana y la lista de la compra. Tus recetas y tus objetivos seguirán siendo solo tuyos.`,
+    cta: "Ver la invitación",
+    url,
+    footer: "La invitación caduca en 7 días. Si no conoces a quien te invita, ignora este mensaje.",
+  });
+}

@@ -14,7 +14,7 @@ const eslintConfig = defineConfig([
           patterns: [
             {
               group: ["@/modules/*/domain/*", "@/modules/*/application/*", "@/modules/*/infrastructure/*", "@/modules/*/ui/*"],
-              message: "Importa el módulo por su contrato: @/modules/<modulo>, /schemas o /server.",
+              message: "Importa el módulo por su contrato: @/modules/<modulo>, /schemas, /server o /ui.",
             },
             { group: ["@/generated/*"], importNames: ["PrismaClient"], message: "Usa el cliente único de @/server/db." },
           ],

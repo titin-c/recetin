@@ -100,6 +100,7 @@ src/modules/households/
 ├─ index.ts                   # CONTRATO PÚBLICO compartido: reglas puras, usable también en el cliente
 ├─ schemas.ts                 # CONTRATO PÚBLICO de validación: Zod, para Server Actions
 ├─ server.ts                  # CONTRATO PÚBLICO de servidor: casos de uso con BD (import "server-only")
+├─ ui.ts                      # CONTRATO PÚBLICO de interfaz: componentes del dominio (cliente)
 ├─ domain/                    # reglas puras (sin Prisma, sin Next): p. ej. «el último propietario no puede salir»
 ├─ application/               # casos de uso: comprueban permisos, orquestan, escriben auditoría
 │  └─ invite-member.ts
@@ -109,7 +110,7 @@ src/modules/households/
 
 Reglas:
 1. `app/` solo llama a casos de uso de los contratos del módulo. Nunca a Prisma directamente.
-2. Un módulo solo importa de otro a través de su contrato (`index.ts`, `schemas.ts` o `server.ts`). Prohibido importar carpetas internas ajenas (regla de ESLint `no-restricted-imports`). Se separa en tres archivos para que el código de cliente no arrastre Zod ni código de servidor (ADR 0003).
+2. Un módulo solo importa de otro a través de su contrato (`index.ts`, `schemas.ts`, `server.ts` o `ui.ts`). Prohibido importar carpetas internas ajenas (regla de ESLint `no-restricted-imports`). Se separa en tres archivos para que el código de cliente no arrastre Zod ni código de servidor (ADR 0003).
 3. `domain/` no importa nada de `infrastructure/`, de Next ni de Prisma: así se prueba con tests unitarios puros.
 4. **Todo caso de uso recibe un `Actor`** obtenido de la sesión en el servidor y comprueba la autorización él mismo. Los identificadores que llegan del cliente nunca se dan por buenos.
 5. Las mutaciones sensibles (cambiar rol, suspender, eliminar, leer contenido privado como admin) escriben su entrada de auditoría **en la misma transacción**.
@@ -175,7 +176,7 @@ La versión de receta es **inmutable**: el plan, las bibliotecas y las personali
 | Tests e2e | `tests/e2e/<flujo>.spec.ts` | `registro.spec.ts` |
 | Rutas | en español, kebab-case | `/perfil/hogares`, `/admin/usuarios` |
 | Variables CSS | igual que los tokens | `--color-accent` |
-| Barrel files | SOLO los contratos de cada módulo (`index.ts`, `schemas.ts`, `server.ts`); en ningún otro sitio | — |
+| Barrel files | SOLO los contratos de cada módulo (`index.ts`, `schemas.ts`, `server.ts`, `ui.ts`); en ningún otro sitio | — |
 | Tipos | locales en su archivo; los del contrato, exportados desde `index.ts` | — |
 
 ## 8. Seguridad de base (detalle en el paso 13)

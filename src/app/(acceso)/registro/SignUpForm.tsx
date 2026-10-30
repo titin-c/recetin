@@ -9,11 +9,12 @@ import { Checkbox } from "@/ui/checkbox/Checkbox";
 import { SubmitButton } from "@/ui/button/SubmitButton";
 import { signUpAction, type FormState } from "../actions";
 
-export function SignUpForm() {
+export function SignUpForm({ next }: { next?: string }) {
   const [state, action] = useActionState<FormState, FormData>(signUpAction, {});
   const emailTaken = state.fields?.email === "YA_EXISTE";
   return (
     <form action={action} noValidate>
+      {next && <input type="hidden" name="siguiente" value={next} />}
       {state.error && (
         <Alert tone="error" title={state.error.title} className="mt-6">
           {state.error.detail}
